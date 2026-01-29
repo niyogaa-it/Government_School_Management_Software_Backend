@@ -15,8 +15,8 @@ controller.createApplicationsslc = async (req, res) => {
             name,
             gender,
             grade_id,
-            dob,           // ✅ ADDED dob
-            age,           // ✅ Already present
+            dob,
+            age,
             nationality,
             state,
             motherTongue,
@@ -46,8 +46,9 @@ controller.createApplicationsslc = async (req, res) => {
             guardianOccupation,
             guardianAddress,
             guardianNumber,
-            academicHistory,
             parentconsentform,
+            academicHistory,
+            passorfail,
             tceslc,
             firstLanguage,
             bankName,
@@ -98,7 +99,7 @@ controller.createApplicationsslc = async (req, res) => {
         });
 
         const sequence = String(count + 1).padStart(4, '0');
-        const applicationNumber = `${school.shortcode}/APP/${academicYear}/${sequence}`;
+        const applicationNumber = `${school.shortcode}/APP-SSLC/${academicYear}/${sequence}`;
 
         // Create application
         const newApplicationsslc = await Applicationsslc.create({
@@ -110,8 +111,8 @@ controller.createApplicationsslc = async (req, res) => {
             name,
             gender,
             grade_id,
-            dob,               // ✅ Save DOB to DB
-            age,               // ✅ Save Age to DB
+            dob,
+            age,
             nationality,
             state,
             motherTongue,
@@ -141,8 +142,9 @@ controller.createApplicationsslc = async (req, res) => {
             guardianOccupation,
             guardianAddress,
             guardianNumber,
-            academicHistory,
             parentconsentform,
+            academicHistory,
+            passorfail,
             tceslc,
             firstLanguage,
             bankName,
@@ -165,9 +167,12 @@ controller.createApplicationsslc = async (req, res) => {
 controller.getAllApplicationsslc = async (req, res) => {
     try {
         const applicationsslcs = await Applicationsslc.findAll({
+            where: {
+                studentStatus: { [Op.ne]: "Removed" }
+            },
             include: [
                 { model: School, attributes: ["id", "name"] },
-                { model: Grade, attributes: ["id", "grade"] } // ✅ ADD THIS
+                { model: Grade, attributes: ["id", "grade"] }
             ],
         });
         return res.json({ applicationsslcs });
@@ -183,7 +188,10 @@ controller.getApplicationsslcsBySchool = async (req, res) => {
         if (!school_id) return res.status(400).json({ message: "School ID required" });
 
         const applicationsslcs = await Applicationsslc.findAll({
-            where: { school_id },
+            where: {
+                school_id,
+                studentStatus: { [Op.ne]: "Removed" }
+            },
             include: [
                 { model: School, attributes: ["id", "name"] },
                 { model: Grade, attributes: ["id", "grade"] }
@@ -283,19 +291,19 @@ const calculateAge = (dob) => {
 
 controller.getApplicationsslcById = async (req, res) => {
     try {
-      const { id } = req.params;
-      const application = await Applicationsslc.findByPk(id, {
-        include: [
-          { model: School },
-          { model: Grade }
-        ]
-      });
-      
-      if (!application) {
-        return res.status(404).json({ error: "Application not found" });
-      }
-      
-      const age = calculateAge(application.dob);
+        const { id } = req.params;
+        const application = await Applicationsslc.findByPk(id, {
+            include: [
+                { model: School },
+                { model: Grade }
+            ]
+        });
+
+        if (!application) {
+            return res.status(404).json({ error: "Application not found" });
+        }
+
+        const age = calculateAge(application.dob);
         const applicationWithAge = {
             ...application.toJSON(),
             age
@@ -360,6 +368,25 @@ controller.updateApplicationsslc = async (req, res) => {
         });
     } catch (error) {
         console.error("Error updating application:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+// ✅ Soft Delete Application (status → Removed)
+controller.updateStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const application = await Applicationsslc.findByPk(id);
+        if (!application) {
+            return res.status(404).json({ error: "Application not found" });
+        }
+
+        await application.update({ studentStatus: "Removed" });
+
+        res.json({ message: "Application removed successfully" });
+    } catch (error) {
+        console.error("Error removing application:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };
