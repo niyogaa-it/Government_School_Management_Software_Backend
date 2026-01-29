@@ -34,6 +34,7 @@ router.get('/getApplicationsslcsBySchool/:school_id', applicationsslccontroller.
 router.post("/admit/:applicationId", applicationsslccontroller.admitStudent);
 router.get('/getApplicationsslcById/:id', applicationsslccontroller.getApplicationsslcById);
 router.put('/updateApplicationsslc/:id', applicationsslccontroller.updateApplicationsslc);
+router.put("/updateStatus/:id",applicationsslccontroller.updateStatus);
 
 router.post('/createApplicationhsc', applicationhsccontroller.createApplicationhsc);
 router.get('/getAllApplicationhsc', applicationhsccontroller.getAllApplicationhsc);
@@ -41,6 +42,7 @@ router.get('/getApplicationhscsBySchool/:school_id', applicationhsccontroller.ge
 router.post("/admit/:applicationId", applicationhsccontroller.admitStudent);
 router.get("/getApplicationhscById/:id",applicationhsccontroller.getApplicationhscById);
 router.put('/updateApplicationhsc/:id', applicationhsccontroller.updateApplicationhsc);
+router.put("/updateStatus/:id",applicationhsccontroller.updateStatus);
 
 router.post("/createGroup", groupController.createGroup);
 router.get("/getAllGroups", groupController.getAllGroups);
@@ -55,6 +57,7 @@ router.get('/getAllStudentsslc', studentsslccontroller.getAllStudentsslc);
 router.get('/getStudentsslcsBySchool/:school_id', studentsslccontroller.getStudentsslcsBySchool);
 router.get("/getStudentsslcById/:id",studentsslccontroller.getStudentsslcById);
 router.put("/updateStudentsslc/:id", studentsslccontroller.updateStudentsslc);
+router.put("/updateStatus/:id",studentsslccontroller.updateStatus);
 
 router.post('/createStudenthsc', studenthsccontroller.createStudenthsc);
 router.get('/getAllStudenthsc', studenthsccontroller.getAllStudenthsc);
