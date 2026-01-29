@@ -80,10 +80,6 @@ const Applicationhsc = sequelize.define("Applicationhsc", {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    caste: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
     scheduledcasteOrtribecommunity: {
         type: DataTypes.STRING,
         allowNull: true
@@ -104,11 +100,15 @@ const Applicationhsc = sequelize.define("Applicationhsc", {
         type: DataTypes.STRING,
         allowNull: true
     },
+    motherTongue: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     identificationmarks: {
         type: DataTypes.STRING,
         allowNull: true
     },
-    motherTongue: {
+    bloodGroup: {
         type: DataTypes.STRING,
         allowNull: true
     },
