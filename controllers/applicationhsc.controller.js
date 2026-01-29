@@ -15,19 +15,20 @@ controller.createApplicationhsc = async (req, res) => {
             name,
             gender,
             grade_id,
-            dob,           // ✅ ADDED dob
-            age,           // ✅ Already present
+            dob,
+            age,
             nationality,
             state,
             birthdistrict,
             community,
-            identificationmarks,
             religion,
             scheduledcasteOrtribecommunity,
             backwardcaste,
             tribeTootherreligion,
             living,
             currentlivingaddress,
+            identificationmarks,
+            bloodGroup,
             motherTongue,
             fatherName,
             motherName,
@@ -43,18 +44,18 @@ controller.createApplicationhsc = async (req, res) => {
             guardianOccupation,
             guardianAddress,
             guardianNumber,
-            examYear, 
-            registrationnumber, 
-            tamil, 
-            english, 
-            maths, 
-            science, 
+            examYear,
+            registrationnumber,
+            tamil,
+            english,
+            maths,
+            science,
             social,
-            total, 
-            percentage, 
-            terminationreason, 
-            photocopyofTC, 
-            previousmedium, 
+            total,
+            percentage,
+            terminationreason,
+            photocopyofTC,
+            previousmedium,
             preferredmedium,
             bankName,
             branchName,
@@ -82,7 +83,7 @@ controller.createApplicationhsc = async (req, res) => {
         });
 
         const sequence = String(count + 1).padStart(4, '0');
-        const applicationNumber = `${school.shortcode}/APP/${academicYear}/${sequence}`;
+        const applicationNumber = `${school.shortcode}/APP-HSC/${academicYear}/${sequence}`;
 
         // Create application
         const newApplicationhsc = await Applicationhsc.create({
@@ -94,13 +95,12 @@ controller.createApplicationhsc = async (req, res) => {
             name,
             gender,
             grade_id,
-            dob,           // ✅ ADDED dob
-            age,           // ✅ Already present
+            dob,
+            age,
             nationality,
             state,
             birthdistrict,
             community,
-            identificationmarks,
             religion,
             scheduledcasteOrtribecommunity,
             backwardcaste,
@@ -108,6 +108,8 @@ controller.createApplicationhsc = async (req, res) => {
             living,
             currentlivingaddress,
             motherTongue,
+            identificationmarks,
+            bloodGroup,
             fatherName,
             motherName,
             fatherOccupation,
@@ -122,18 +124,18 @@ controller.createApplicationhsc = async (req, res) => {
             guardianOccupation,
             guardianAddress,
             guardianNumber,
-            examYear, 
-            registrationnumber, 
-            tamil, 
-            english, 
-            maths, 
-            science, 
+            examYear,
+            registrationnumber,
+            tamil,
+            english,
+            maths,
+            science,
             social,
-            total, 
-            percentage, 
-            terminationreason, 
-            photocopyofTC, 
-            previousmedium, 
+            total,
+            percentage,
+            terminationreason,
+            photocopyofTC,
+            previousmedium,
             preferredmedium,
             bankName,
             branchName,
@@ -155,12 +157,15 @@ controller.createApplicationhsc = async (req, res) => {
 controller.getAllApplicationhsc = async (req, res) => {
     try {
         const applicationhscs = await Applicationhsc.findAll({
+            where: {
+                studentStatus: { [Op.ne]: "Removed" }
+            },
             include: [
                 { model: School, attributes: ["id", "name"] },
                 { model: Grade, attributes: ["id", "grade"] } // ✅ Add this to include Grade
             ]
         });
-        
+
         return res.json({ applicationhscs });
     } catch (error) {
         console.error("Error fetching applicationhscs:", error);
@@ -174,7 +179,10 @@ controller.getApplicationhscsBySchool = async (req, res) => {
         if (!school_id) return res.status(400).json({ message: "School ID required" });
 
         const applicationhscs = await Applicationhsc.findAll({
-            where: { school_id },
+            where: {
+                school_id,
+                studentStatus: { [Op.ne]: "Removed" }
+            },
             include: [
                 { model: School, attributes: ["id", "name"] },
                 { model: Grade, attributes: ["id", "grade"] }
@@ -348,5 +356,25 @@ controller.updateApplicationhsc = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
+// ✅ Soft Delete Application (status → Removed)
+controller.updateStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const application = await Applicationhsc.findByPk(id);
+        if (!application) {
+            return res.status(404).json({ error: "Application not found" });
+        }
+
+        await application.update({ studentStatus: "Removed" });
+
+        res.json({ message: "Application removed successfully" });
+    } catch (error) {
+        console.error("Error removing application:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
 
 module.exports = controller;
