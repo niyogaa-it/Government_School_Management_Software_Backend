@@ -8,5 +8,6 @@ router.get('/getApplicationhscsBySchool/:school_id', applicationhsccontroller.ge
 router.post("/admit/:applicationId", applicationhsccontroller.admitStudent);
 router.get("/getApplicationhscById/:id",applicationhsccontroller.getApplicationhscById);
 router.put('/updateApplicationhsc/:id', applicationhsccontroller.updateApplicationhsc);
+router.put("/updateStatus/:id",applicationhsccontroller.updateStatus);
 
 module.exports = router;
