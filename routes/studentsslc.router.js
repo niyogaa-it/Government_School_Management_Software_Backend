@@ -7,6 +7,6 @@ router.get('/getAllStudentsslc', studentsslccontroller.getAllStudentsslc);
 router.get('/getStudentsslcsBySchool/:school_id', studentsslccontroller.getStudentsslcsBySchool);
 router.get("/getStudentsslcById/:id",studentsslccontroller.getStudentsslcById);
 router.put("/updateStudentsslc/:id", studentsslccontroller.updateStudentsslc);
-
+router.put("/updateStatus/:id", studentsslccontroller.updateStatus);
 
 module.exports = router;
