@@ -239,7 +239,7 @@ const Studentsslc = sequelize.define("Studentsslc", {
 
 Studentsslc.belongsTo(School, { foreignKey: "school_id" });
 Studentsslc.belongsTo(Grade, { foreignKey: "grade_id" });
-Studentsslc.belongsTo(Section, { foreignKey: "section_id" });
+Studentsslc.belongsTo(Section, { foreignKey: "section_id", as: "Section" });
 
 
 module.exports = Studentsslc;
