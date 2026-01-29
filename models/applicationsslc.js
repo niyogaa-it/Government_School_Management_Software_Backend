@@ -176,11 +176,15 @@ const Applicationsslc = sequelize.define("Applicationsslc", {
     type: DataTypes.BIGINT,
     allowNull: true
   },
+  parentconsentform: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   academicHistory: {
     type: DataTypes.JSON,
     allowNull: true,
   },
-  parentconsentform: {
+  passorfail: {
     type: DataTypes.STRING,
     allowNull: true
   },
@@ -209,7 +213,7 @@ const Applicationsslc = sequelize.define("Applicationsslc", {
     allowNull: true
   },
 
-  studentStatus: { 
+  studentStatus: {
     field: "studentStatus",
     type: DataTypes.STRING, // You can change the type if needed
     allowNull: false,
