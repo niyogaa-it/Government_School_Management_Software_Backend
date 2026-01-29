@@ -102,10 +102,6 @@ const Studenthsc = sequelize.define("Studenthsc", {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    caste: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
     scheduledcasteOrtribecommunity: {
         type: DataTypes.STRING,
         allowNull: true
@@ -277,7 +273,7 @@ const Studenthsc = sequelize.define("Studenthsc", {
 
 Studenthsc.belongsTo(School, { foreignKey: "school_id" });
 Studenthsc.belongsTo(Grade, { foreignKey: "grade_id" });
-Studenthsc.belongsTo(Section, { foreignKey: "section_id" });
+Studenthsc.belongsTo(Section, { foreignKey: "section_id", as: "Section" });
 Studenthsc.belongsTo(Group, { foreignKey: "group_id" });
 
 
