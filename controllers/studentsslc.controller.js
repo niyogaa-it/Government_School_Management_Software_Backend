@@ -1,6 +1,7 @@
-const { Studentsslc, School, Grade, Section } = require("../models");
+const { Studentsslc, School, Grade, Section, PromotedStudent } = require("../models");
 
 const controller = {};
+const { Op } = require("sequelize");
 
 controller.createStudentsslc = async (req, res) => {
     let admissionNumber = req.body.admissionNumber;
@@ -90,29 +91,30 @@ controller.createStudentsslc = async (req, res) => {
         const school = await School.findByPk(school_id);
         if (!school) return res.status(404).json({ error: "School not found" });
 
-
-
         if (!admissionNumber) {
             const latestAdmission = await Studentsslc.findOne({
-                where: { school_id, academicYear },
-                order: [['admissionNumber', 'DESC']],
+                where: {
+                    school_id,
+                    academicYear
+                },
+                order: [['id', 'DESC']], // ✅ IMPORTANT
                 attributes: ['admissionNumber']
             });
 
             let nextSequentialNumber = 1;
-            if (latestAdmission && latestAdmission.admissionNumber) {
-                const lastAdmission = latestAdmission.admissionNumber;
-                const numericPart = parseInt(lastAdmission.replace(new RegExp(`^${school.shortcode}`), ''), 10);
-                if (!isNaN(numericPart)) {
-                    nextSequentialNumber = numericPart + 1;
+
+            if (latestAdmission?.admissionNumber) {
+                const match = latestAdmission.admissionNumber.match(/(\d{4})$/);
+                if (match) {
+                    nextSequentialNumber = parseInt(match[1], 10) + 1;
                 }
             }
 
             const paddedNumber = String(nextSequentialNumber).padStart(4, '0');
-            admissionNumber = `${school.shortcode}${paddedNumber}`;
+
+            admissionNumber = `${school.shortcode}SSLC${paddedNumber}`;
         }
 
-        // ✅ Generate application number
         const count = await Studentsslc.count({
             where: {
                 school_id,
@@ -194,11 +196,11 @@ controller.getAllStudentsslc = async (req, res) => {
             include: [
                 { model: School, attributes: ["id", "name"] },
                 { model: Grade, attributes: ["id", "grade"] },
-                { model: Section, attributes: ["id", "sectionName"] }
+                { model: Section, as: "Section", attributes: ["id", "sectionName"] }
             ]
         });
 
-        return res.json({ studentsslcs });
+        res.json({ studentsslcs });
     } catch (error) {
         console.error("Error fetching studentsslcs:", error);
         res.status(500).json({ error: "Internal server error" });
@@ -208,27 +210,23 @@ controller.getAllStudentsslc = async (req, res) => {
 controller.getStudentsslcsBySchool = async (req, res) => {
     try {
         const { school_id } = req.params;
-        if (!school_id) return res.status(400).json({ message: "School ID required" });
 
         const studentsslcs = await Studentsslc.findAll({
-            where: { school_id },
+            where: {
+                school_id,
+                status: { [Op.ne]: "Removed" }   // ✅ KEY LINE
+            },
             include: [
                 { model: School, attributes: ["id", "name"] },
                 { model: Grade, attributes: ["id", "grade"] },
-                { model: Section, attributes: ["id", "sectionName"] }
-            ],
-            attributes: {
-                exclude: [] // include all fields
-            }
+                { model: Section, as: "Section", attributes: ["id", "sectionName"] }
+            ]
         });
 
         res.status(200).json({ studentsslcs });
     } catch (error) {
         console.error("Server Error:", error);
-        res.status(500).json({
-            error: "Internal error",
-            details: error.message
-        });
+        res.status(500).json({ error: "Internal server error" });
     }
 };
 
@@ -262,7 +260,7 @@ controller.getStudentsslcById = async (req, res) => {
             include: [
                 { model: School, attributes: ["id", "name"] },
                 { model: Grade, attributes: ["id", "grade"] },
-                { model: Section, attributes: ["id", "sectionName"] }
+                { model: Section, as: "Section", attributes: ["id", "sectionName"] }
             ]
         });
 
@@ -314,5 +312,59 @@ controller.updateStudentsslc = async (req, res) => {
     }
 };
 
+// ✅ Soft Delete Application (status → Removed)
+controller.updateStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const student = await Studentsslc.findByPk(id);
+        if (!student) {
+            return res.status(404).json({ error: "Application not found" });
+        }
+
+        await student.update({ status: "Removed" });
+
+        res.json({ message: "Application removed successfully" });
+    } catch (error) {
+        console.error("Error removing application:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+// 🔹 PROMOTE STUDENT (SSLC)
+controller.promoteStudent = async (req, res) => {
+    try {
+        const { studentId, toGradeId, toSectionId, academicYear } = req.body;
+
+        if (!studentId || !toGradeId || !toSectionId || !academicYear) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        // 1️⃣ Get existing student
+        const student = await Studentsslc.findByPk(studentId);
+        if (!student) {
+            return res.status(404).json({ message: "Student not found" });
+        }
+
+        // 2️⃣ Store promoted student in new table
+        await PromotedStudent.create({
+            studentsslc_id: student.id,
+            name: student.name,
+            dob: student.dob,
+            gender: student.gender,
+            fatherName: student.fatherName,
+            academicYear: academicYear,
+            grade_id: toGradeId,
+            section_id: toSectionId,
+            status: "Promoted"
+        });
+
+        return res.json({ message: "Student promoted successfully" });
+
+    } catch (error) {
+        console.error("Promotion error:", error);
+        res.status(500).json({ message: "Promotion failed" });
+    }
+};
 
 module.exports = controller;
