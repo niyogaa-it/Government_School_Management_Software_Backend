@@ -25,6 +25,7 @@ controller.createStudentsslc = async (req, res) => {
             religion,
             hometown,
             community,
+            caste,
             tribecommunity,
             exgratiasalary,
             religionchanging,
@@ -145,6 +146,7 @@ controller.createStudentsslc = async (req, res) => {
             hometown,
             religion,
             community,
+            caste,
             tribecommunity,
             exgratiasalary,
             religionchanging,
@@ -332,39 +334,43 @@ controller.updateStatus = async (req, res) => {
 };
 
 // 🔹 PROMOTE STUDENT (SSLC)
-controller.promoteStudent = async (req, res) => {
-    try {
-        const { studentId, toGradeId, toSectionId, academicYear } = req.body;
+// controller.getStudentsByFilter = async (req, res) => {
+//   try {
+//     const { school_id, academicYear, grade_id, section_id } = req.query;
 
-        if (!studentId || !toGradeId || !toSectionId || !academicYear) {
-            return res.status(400).json({ message: "Missing required fields" });
-        }
+//     if (!school_id || !academicYear || !grade_id || !section_id) {
+//       return res.status(400).json({
+//         message: "Missing required filters"
+//       });
+//     }
 
-        // 1️⃣ Get existing student
-        const student = await Studentsslc.findByPk(studentId);
-        if (!student) {
-            return res.status(404).json({ message: "Student not found" });
-        }
+//     const students = await Studentsslc.findAll({
+//       where: {
+//         school_id,
+//         academicYear,
+//         grade_id,
+//         section_id,
+//         status: "active"
+//       },
+//       attributes: [
+//         "id",
+//         "name",
+//         "admissionNumber",
+//         "fatherName"
+//       ],
+//       include: [
+//         { model: Grade, attributes: ["id", "grade"] },
+//         { model: Section, as: "Section", attributes: ["id", "sectionName"] }
+//       ],
+//       order: [["name", "ASC"]]
+//     });
 
-        // 2️⃣ Store promoted student in new table
-        await PromotedStudent.create({
-            studentsslc_id: student.id,
-            name: student.name,
-            dob: student.dob,
-            gender: student.gender,
-            fatherName: student.fatherName,
-            academicYear: academicYear,
-            grade_id: toGradeId,
-            section_id: toSectionId,
-            status: "Promoted"
-        });
+//        res.json({ students });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Server error" });
+//   }
+// };
 
-        return res.json({ message: "Student promoted successfully" });
-
-    } catch (error) {
-        console.error("Promotion error:", error);
-        res.status(500).json({ message: "Promotion failed" });
-    }
-};
 
 module.exports = controller;
