@@ -72,7 +72,25 @@ controller.getSubjectsBySchoolGradeSection = async (req, res) => {
       return res.status(500).json({ error: "Internal server error" });
     }
   };
-  
-  
+
+// Soft Delete Subject
+controller.updateStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    await Subject.update(
+      { status },
+      { where: { id } }
+    );
+
+    return res.status(200).json({
+      message: "Subject status updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating subject status:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
   
 module.exports = controller;
