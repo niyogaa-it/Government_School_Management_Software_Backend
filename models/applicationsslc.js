@@ -84,6 +84,10 @@ const Applicationsslc = sequelize.define("Applicationsslc", {
     type: DataTypes.STRING,
     allowNull: true
   },
+  caste: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   tribecommunity: {
     type: DataTypes.STRING,
     allowNull: true
