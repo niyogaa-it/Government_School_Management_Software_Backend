@@ -80,6 +80,10 @@ const Applicationhsc = sequelize.define("Applicationhsc", {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    caste: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     scheduledcasteOrtribecommunity: {
         type: DataTypes.STRING,
         allowNull: true
