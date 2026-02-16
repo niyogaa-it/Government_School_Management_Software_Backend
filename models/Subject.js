@@ -10,14 +10,6 @@ const Subject = sequelize.define("Subject", {
     primaryKey: true,
     autoIncrement: true,
   },
-  subjectName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  shortCode: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
   school_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -41,6 +33,14 @@ const Subject = sequelize.define("Subject", {
       model: "section",
       key: "id",
     },
+  },
+  subjectName: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  shortCode: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   status: {
     type: DataTypes.INTEGER,
