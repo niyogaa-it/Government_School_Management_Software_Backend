@@ -222,29 +222,45 @@ controller.admitStudent = async (req, res) => {
             return res.status(404).json({ error: "Application not found" });
         }
 
+        if (application.studentStatus === "Admitted") {
+            return res.status(400).json({ error: "Student already admitted" });
+        }
+
         const school = await School.findByPk(application.school_id);
         if (!school) {
             return res.status(404).json({ error: "School not found" });
         }
 
-        const shortcode = school.shortcode;
+        const prefix = `${school.shortcode}SSLC`;
 
+        // STEP 1: Find last admission number for this school
         const lastStudent = await Studentsslc.findOne({
-            where: { school_id: application.school_id },
-            order: [['id', 'DESC']]
+            where: {
+                school_id: application.school_id,
+                admissionNumber: {
+                    [Op.like]: `${prefix}%`
+                }
+            },
+            order: [['admissionNumber', 'DESC']],
+            attributes: ['admissionNumber']
         });
 
-        let nextNumber = 1;
-        if (lastStudent && lastStudent.admissionNumber) {
-            const lastNum = parseInt(lastStudent.admissionNumber.replace(shortcode, ""));
-            if (!isNaN(lastNum)) nextNumber = lastNum + 1;
+        // STEP 2: Extract last sequence
+        let nextSeq = 1;
+        if (lastStudent?.admissionNumber) {
+            const match = lastStudent.admissionNumber.match(/(\d{4})$/);
+            if (match) {
+                nextSeq = parseInt(match[1], 10) + 1;
+            }
         }
 
-        const newAdmissionNumber = `${shortcode}${String(nextNumber).padStart(4, '0')}`;
+        // STEP 3: Generate new admission number
+        const newAdmissionNumber = `${prefix}${String(nextSeq).padStart(4, '0')}`;
 
-        application.studentStatus = "Admitted";
-        await application.save();
+        // STEP 4: Update application status
+        await application.update({ studentStatus: "Admitted" });
 
+        // STEP 5: Insert into Studentsslc
         await Studentsslc.create({
             school_id: application.school_id,
             academicYear: application.academicYear,
@@ -253,6 +269,66 @@ controller.admitStudent = async (req, res) => {
             grade_id: application.grade_id,
             admissionNumber: newAdmissionNumber,
             dateofjoin: new Date(),
+            status: "active",
+
+            // 🔹 Student basic info
+            emisNum: application.emisNum,
+            aadharNumber: application.aadharNumber,
+            name: application.name,
+            gender: application.gender,
+            grade_id: application.grade_id,
+            dob: application.dob,
+            age: application.age,
+            nationality: application.nationality,
+            state: application.state,
+            motherTongue: application.motherTongue,
+            hometown: application.hometown,
+            religion: application.religion,
+            community: application.community,
+            caste: application.caste,
+            tribecommunity: application.tribecommunity,
+            exgratiasalary: application.exgratiasalary,
+            religionchanging: application.religionchanging,
+            living: application.living,
+            vaccinated: application.vaccinated,
+            identificationmarks: application.identificationmarks,
+            bloodGroup: application.bloodGroup,
+            physical: application.physical,
+            physicalDetails: application.physicalDetails,
+
+            // 🔹 Parent / Guardian details
+            fatherName: application.fatherName,
+            motherName: application.motherName,
+            fatherOccupation: application.fatherOccupation,
+            motherOccupation: application.motherOccupation,
+            fatherIncome: application.fatherIncome,
+            motherIncome: application.motherIncome,
+            guardianName: application.guardianName,
+            guardianOccupation: application.guardianOccupation,
+            guardianAddress: application.guardianAddress,
+            guardianNumber: application.guardianNumber,
+
+            // 🔹 Contact details
+            address: application.address,
+            pincode: application.pincode,
+            telephoneNumber: application.telephoneNumber,
+            mobileNumber: application.mobileNumber,
+
+            // 🔹 Academic & documents
+            academicHistory:
+                typeof application.academicHistory === "string"
+                    ? JSON.parse(application.academicHistory)
+                    : application.academicHistory,
+            parentconsentform: application.parentconsentform,
+            passorfail: application.passorfail,
+            tceslc: application.tceslc,
+            firstLanguage: application.firstLanguage,
+
+            // 🔹 Bank details
+            bankName: application.bankName,
+            branchName: application.branchName,
+            accountNumber: application.accountNumber,
+            ifsccode: application.ifsccode
         });
 
         return res.json({
