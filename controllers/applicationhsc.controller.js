@@ -21,6 +21,7 @@ controller.createApplicationhsc = async (req, res) => {
             state,
             birthdistrict,
             community,
+            caste,
             religion,
             scheduledcasteOrtribecommunity,
             backwardcaste,
@@ -101,6 +102,7 @@ controller.createApplicationhsc = async (req, res) => {
             state,
             birthdistrict,
             community,
+            caste,
             religion,
             scheduledcasteOrtribecommunity,
             backwardcaste,
@@ -212,29 +214,46 @@ controller.admitStudent = async (req, res) => {
             return res.status(404).json({ error: "Application not found" });
         }
 
+        if (application.studentStatus === "Admitted") {
+            return res.status(400).json({ error: "Student already admitted" });
+        }
+
         const school = await School.findByPk(application.school_id);
         if (!school) {
             return res.status(404).json({ error: "School not found" });
         }
 
-        const shortcode = school.shortcode;
+        // PREFIX FOR HSC
+        const prefix = `${school.shortcode}HSC`;
 
+        // STEP 1: Find last HSC admission number
         const lastStudent = await Studenthsc.findOne({
-            where: { school_id: application.school_id },
-            order: [['id', 'DESC']]
+            where: {
+                school_id: application.school_id,
+                admissionNumber: {
+                    [Op.like]: `${prefix}%`
+                }
+            },
+            order: [["admissionNumber", "DESC"]],
+            attributes: ["admissionNumber"]
         });
 
-        let nextNumber = 1;
-        if (lastStudent && lastStudent.admissionNumber) {
-            const lastNum = parseInt(lastStudent.admissionNumber.replace(shortcode, ""));
-            if (!isNaN(lastNum)) nextNumber = lastNum + 1;
+        // STEP 2: Extract last sequence
+        let nextSeq = 1;
+        if (lastStudent?.admissionNumber) {
+            const match = lastStudent.admissionNumber.match(/(\d{4})$/);
+            if (match) {
+                nextSeq = parseInt(match[1], 10) + 1;
+            }
         }
 
-        const newAdmissionNumber = `${shortcode}${String(nextNumber).padStart(4, '0')}`;
+        // STEP 3: Generate new admission number
+        const newAdmissionNumber = `${prefix}${String(nextSeq).padStart(4, "0")}`;
 
-        application.studentStatus = "Admitted";
-        await application.save();
+        // STEP 4: Update application status
+        await application.update({ studentStatus: "Admitted" });
 
+        // STEP 5: Insert into Studenthsc
         await Studenthsc.create({
             school_id: application.school_id,
             academicYear: application.academicYear,
@@ -243,6 +262,56 @@ controller.admitStudent = async (req, res) => {
             grade_id: application.grade_id,
             admissionNumber: newAdmissionNumber,
             dateofjoin: new Date(),
+            status: "active",
+            emisNum: application.emisNum,
+            aadharNumber: application.aadharNumber,
+            dob: application.dob,
+            age: application.age,
+            nationality: application.nationality,
+            state: application.state,
+            birthdistrict: application.birthdistrict,
+            community: application.community,
+            caste: application.caste,
+            religion: application.religion,
+            scheduledcasteOrtribecommunity: application.scheduledcasteOrtribecommunity,
+            backwardcaste: application.backwardcaste,
+            tribeTootherreligion: application.tribeTootherreligion,
+            living: application.living,
+            currentlivingaddress: application.currentlivingaddress,
+            motherTongue: application.motherTongue,
+            identificationmarks: application.identificationmarks,
+            bloodGroup: application.bloodGroup,
+            fatherName: application.fatherName,
+            motherName: application.motherName,
+            fatherOccupation: application.fatherOccupation,
+            motherOccupation: application.motherOccupation,
+            fatherIncome: application.fatherIncome,
+            motherIncome: application.motherIncome,
+            address: application.address,
+            pincode: application.pincode,
+            telephoneNumber: application.telephoneNumber,
+            mobileNumber: application.mobileNumber,
+            guardianName: application.guardianName,
+            guardianOccupation: application.guardianOccupation,
+            guardianAddress: application.guardianAddress,
+            guardianNumber: application.guardianNumber,
+            examYear: application.examYear,
+            registrationnumber: application.registrationnumber,
+            tamil: application.tamil,
+            english: application.english,
+            maths: application.maths,
+            science: application.science,
+            social: application.social,
+            total: application.total,
+            percentage: application.percentage,
+            terminationreason: application.terminationreason,
+            photocopyofTC: application.photocopyofTC,
+            previousmedium: application.previousmedium,
+            preferredmedium: application.preferredmedium,
+            bankName: application.bankName,
+            branchName: application.branchName,
+            accountNumber: application.accountNumber,
+            ifsccode: application.ifsccode
         });
 
         return res.json({
