@@ -5,6 +5,9 @@ const bodyParser = require("body-parser");
 const port = 8080;
 const app = express();
 
+const gradeRouter = require("./routes/grade.router");
+const sectionRouter = require("./routes/section.router");
+
 app.use(cors({
   origin: "http://localhost:3000",
   credentials: true // if using cookies or auth
@@ -46,6 +49,8 @@ const groupRouter = require('./routes/group.router');
 app.use("/studentsslc", studentsslcRouter);
 app.use('/group', groupRouter);
 app.use("/", router);
+app.use("/grade", gradeRouter);
+app.use("/section", sectionRouter);
 
 // ✅ Sample endpoint
 app.get("/", (req, res) => {
