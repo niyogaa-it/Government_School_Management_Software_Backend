@@ -97,6 +97,10 @@ const Studentsslc = sequelize.define("Studentsslc", {
     type: DataTypes.STRING,
     allowNull: true
   },
+  caste: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   tribecommunity: {
     type: DataTypes.STRING,
     allowNull: true
