@@ -2,7 +2,6 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 const School = require("./school");
 const Grade = require("./grade");
-const Section = require("./section");
 
 const Subject = sequelize.define("Subject", {
   id: {
@@ -26,14 +25,6 @@ const Subject = sequelize.define("Subject", {
       key: "id",
     },
   },
-  section_id: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: "section",
-      key: "id",
-    },
-  },
   subjectName: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -54,6 +45,5 @@ const Subject = sequelize.define("Subject", {
 // Define associations
 Subject.belongsTo(School, { foreignKey: "school_id" });
 Subject.belongsTo(Grade, { foreignKey: "grade_id" });
-Subject.belongsTo(Section, { foreignKey: "section_id" });
 
 module.exports = Subject;
