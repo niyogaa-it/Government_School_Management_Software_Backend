@@ -8,7 +8,7 @@ controller.getAllSchools = async (req, res) => {
         // ✅ Removed superadmin check
         const schools = await School.findAll({
             where: { status: 1 }, // Optional: if soft-delete logic is used
-            attributes: ["id", "name", "shortcode", "address", "city", "state", "pincode"],
+            attributes: ["id", "name", "shortcode", "phoneNumber", "address", "city", "state", "pincode"],
         });
         
         return res.json({ schools });
@@ -22,7 +22,7 @@ controller.getAllSchools = async (req, res) => {
 // ✅ Create school (Only if authorized)
 controller.createSchool = async (req, res) => {
     try {
-        const { name, shortcode, address, city, pincode, state } = req.body;
+        const { name, shortcode, phoneNumber, address, city, pincode, state } = req.body;
 
         // 🔒 Check for required fields
         if (!name || !shortcode || !address || !city || !pincode || !state) {
@@ -39,6 +39,7 @@ controller.createSchool = async (req, res) => {
         const school = await School.create({
             name,
             shortcode,
+            phoneNumber,
             address,
             city,
             pincode,
@@ -86,6 +87,41 @@ controller.deleteSchool = async (req, res) => {
     } catch (error) {
         console.error("Error deleting school:", error);
         res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+controller.updateSchool = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, shortcode, phoneNumber, address, city, state, pincode } = req.body;
+
+        const school = await School.findOne({
+            where: { id, status: 1 }
+        });
+
+        if (!school) {
+            return res.status(404).json({ error: "School not found" });
+        }
+
+        await school.update({
+            name,
+            shortcode,
+            phoneNumber,
+            address,
+            city,
+            state,
+            pincode
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "School updated successfully",
+            school
+        });
+
+    } catch (error) {
+        console.error("Error updating school:", error);
+        return res.status(500).json({ error: "Internal server error" });
     }
 };
 
