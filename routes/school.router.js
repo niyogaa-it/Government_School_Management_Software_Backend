@@ -8,5 +8,6 @@ router.get("/getAllSchools", schoolcontroller.getAllSchools);
 router.get("/getSchool/:id", schoolcontroller.getSchoolById); 
 router.post("/createSchool", schoolcontroller.createSchool);
 router.delete("/deleteSchool/:id", schoolcontroller.deleteSchool);
+router.put("/updateSchool/:id", schoolcontroller.updateSchool);
 
 module.exports = router;
