@@ -94,6 +94,34 @@ controller.getSectionsBySchoolAndGrade = async (req, res) => {
     }
 };
 
+// controller.getSectionsByFilter = async (req, res) => {
+//   try {
+//     const { school_id, academicYear, grade_id } = req.query;
+
+//     if (!school_id || !academicYear || !grade_id) {
+//       return res.status(400).json({
+//         message: "school_id, academicYear and grade_id are required"
+//       });
+//     }
+
+//     const sections = await Section.findAll({
+//       where: {
+//         school_id,
+//         academicYear,
+//         grade_id,
+//         status: 1
+//       },
+//       order: [["sectionName", "ASC"]]
+//     });
+
+//     res.json({ sections });
+//   } catch (error) {
+//     console.error("Error fetching sections:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
+
+
 // ✅ New: Soft Delete (status update)
 controller.updateStatus = async (req, res) => {
     try {
