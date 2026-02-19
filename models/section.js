@@ -3,7 +3,7 @@ const sequelize = require("../config/database");
 const School = require("./school");
 const Grade = require("./grade");
 
-const Section = sequelize.define( "section", {
+const Section = sequelize.define("section", {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -12,23 +12,23 @@ const Section = sequelize.define( "section", {
     },
     school_id: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
         references: {
-            model: "school",  
+            model: "school",
             key: "id",
         },
     },
-    grade_id: {  
+    grade_id: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
         references: {
-            model: "grade", 
+            model: "grade",
             key: "id",
         },
     },
     sectionName: {
         type: DataTypes.STRING,
-        allowNull: true,
+        allowNull: false,
     },
     shortCode: {
         type: DataTypes.STRING,
@@ -38,7 +38,18 @@ const Section = sequelize.define( "section", {
         type: DataTypes.INTEGER,
         allowNull: true,
     },
-    },
+},
+    // {
+    //     tableName: "section",
+    //     timestamps: false,
+    //     indexes: [
+    //         {
+    //             unique: true,
+    //             fields: ["school_id", "academicYear", "grade_id", "sectionName"] // ✅ DB safety
+    //         }
+    //     ]
+    // });
+
     {
         timestamps: false,
         tableName: "section",
