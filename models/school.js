@@ -18,6 +18,10 @@ const School = sequelize.define("School", {
         allowNull: false,
         unique: true,
     },
+    phoneNumber: {
+            type: DataTypes.BIGINT,  
+            allowNull: true,
+        },
     address: {
         type: DataTypes.STRING,
         allowNull: false,
