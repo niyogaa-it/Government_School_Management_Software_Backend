@@ -1,5 +1,5 @@
 const { Role, School } = require("../models");
-
+const { Op } = require("sequelize");
 const controller = {};
 
 // Create a new role
@@ -7,17 +7,15 @@ controller.createRole = async (req, res) => {
     try {
         const { roleOfUser, school_id } = req.body;
 
-        // Check if the school exists
         const schoolExists = await School.findByPk(school_id);
         if (!schoolExists) {
             return res.status(404).json({ error: "School not found" });
         }
 
-        // Check for duplicate role in the same school
         const existingRole = await Role.findOne({
             where: {
                 school_id,
-                roleOfUser: roleOfUser.toLowerCase(),
+                roleOfUser: roleOfUser
             },
         });
 
@@ -25,13 +23,16 @@ controller.createRole = async (req, res) => {
             return res.status(400).json({ error: "This role already exists in this school." });
         }
 
-        // Create role
         const role = await Role.create({
-            roleOfUser: roleOfUser.toLowerCase(),
+            roleOfUser,   // ✅ NO lowercase conversion
             school_id,
         });
 
-        return res.status(201).json({ message: "Role created successfully", role });
+        return res.status(201).json({
+            message: "Role created successfully",
+            role
+        });
+
     } catch (error) {
         console.error("Error creating role:", error);
         res.status(500).json({ error: "Internal server error" });
@@ -45,17 +46,17 @@ controller.getAllRoles = async (req, res) => {
             where: { status: 1 },
             include: {
                 model: School,
-                attributes: ["id", "name"], // ✅ Include school details
+                attributes: ["id", "name"], //  Include school details
             },
         });
-        return res.json({ roles });  // ✅ Ensure response has `{ roles: [...] }`
+        return res.json({ roles });  //  Ensure response has `{ roles: [...] }`
     } catch (error) {
         console.error("Error fetching roles:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };
 
-// ✅ Get roles based on school ID
+//  Get roles based on school ID
 controller.getRolesBySchool = async (req, res) => {
     try {
         const { school_id } = req.params;
@@ -69,7 +70,7 @@ controller.getRolesBySchool = async (req, res) => {
             attributes: ["id", "roleOfUser"],
         });
 
-       return res.status(200).json({ roles });
+        return res.status(200).json({ roles });
 
         res.status(200).json({ roles });
     } catch (error) {
