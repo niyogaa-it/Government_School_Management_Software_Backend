@@ -75,23 +75,43 @@ controller.getGradesBySchool = async (req, res) => {
 };
 
 controller.deleteGrade = async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-    // Check if grade exists
-    const grade = await Grade.findByPk(id);
-    if (!grade) {
-      return res.status(404).json({ error: "Grade not found" });
+        // Check if grade exists
+        const grade = await Grade.findByPk(id);
+        if (!grade) {
+            return res.status(404).json({ error: "Grade not found" });
+        }
+
+        // Soft delete â€” set status = 0
+        await grade.update({ status: 0 });
+
+        return res.status(200).json({ message: "Grade deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting grade:", error);
+        res.status(500).json({ error: "Internal server error" });
     }
+};
 
-    // Soft delete — set status = 0
-    await grade.update({ status: 0 });
+controller.updateGrade = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { grade } = req.body;
 
-    return res.status(200).json({ message: "Grade deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting grade:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
+        const existingGrade = await Grade.findByPk(id);
+
+        if (!existingGrade) {
+            return res.status(404).json({ error: "Grade not found" });
+        }
+
+        await existingGrade.update({ grade });
+
+        res.status(200).json({ message: "Grade updated successfully" });
+    } catch (error) {
+        console.error("Error updating grade:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
 };
 
 module.exports = controller;
