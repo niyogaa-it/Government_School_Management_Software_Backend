@@ -23,7 +23,7 @@ const Admin = sequelize.define("Admin", {
         },
     },
     mobileNumber: {
-        type: DataTypes.INTEGER,  
+        type: DataTypes.BIGINT,  
         allowNull: true,
     },
     email: {
@@ -50,6 +50,9 @@ const Admin = sequelize.define("Admin", {
 }, {
     timestamps: false,
     tableName: "admin_form",
+     defaultScope: {
+        where: { status: 1 } 
+     }
 });
 
 Admin.belongsTo(School, { foreignKey: "school_id" });
