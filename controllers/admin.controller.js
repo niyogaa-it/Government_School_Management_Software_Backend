@@ -6,6 +6,7 @@ const controller = {};
 controller.getAllAdmin = async (req, res) => {
     try {
         const admins = await Admin.findAll({
+            where: { status: 1 }, 
             include: [
                 { model: Role, attributes: ["id", "roleOfUser"] },  // Include Role details
                 { model: School, attributes: ["id", "name"] }       // Include School details
@@ -76,12 +77,13 @@ controller.getAdminById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const admin = await Admin.findByPk(id, {
-      include: [
-        { model: Role, attributes: ["id", "roleOfUser"] },
-        { model: School, attributes: ["id", "name"] }
-      ]
-    });
+    const admin = await Admin.findOne({
+  where: { id, status: 1 },   
+  include: [
+    { model: Role, attributes: ["id", "roleOfUser"] },
+    { model: School, attributes: ["id", "name"] }
+  ]
+});
 
     if (!admin) {
       return res.status(404).json({ error: "Admin not found" });
@@ -101,7 +103,7 @@ controller.login = async (req, res) => {
 
         // Check if admin exists with the provided email and password
         const admin = await Admin.findOne({
-            where: { email, password },
+            where: { email, password, status: 1 },
             include: [
                 { model: Role, attributes: ["id", "roleOfUser"] },
                 { model: School, attributes: ["id", "name"] }
