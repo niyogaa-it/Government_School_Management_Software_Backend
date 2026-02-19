@@ -66,6 +66,10 @@ const Studenthsc = sequelize.define("Studenthsc", {
             key: "id",
         },
     },
+    group_subjects: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
     group_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
