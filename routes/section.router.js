@@ -11,5 +11,11 @@ router.get("/getSectionsBySchoolAndGrade/:school_id/:grade_id", sectionControlle
 router.get("/getSectionById/:id", sectionController.getSectionById);
 router.put("/updateSection/:id", sectionController.updateSection);
 router.put("/updateStatus/:id", sectionController.updateStatus);
+// router.get(
+//   "/getSectionsByFilter",
+//   sectionController.getSectionsByFilter
+// );
+
+
 
 module.exports = router;
