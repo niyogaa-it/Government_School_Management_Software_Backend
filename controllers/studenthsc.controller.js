@@ -16,6 +16,7 @@ controller.createStudenthsc = async (req, res) => {
             name,
             gender,
             grade_id,
+            group_subjects: formattedSubjects,
             section_id,
             group_id,
             dob,
@@ -143,6 +144,7 @@ controller.createStudenthsc = async (req, res) => {
             grade_id,
             section_id,
             group_id,
+            group_subjects: formattedSubjects,
             dob,
             age,
             nationality,
@@ -207,7 +209,7 @@ controller.getAllStudenthsc = async (req, res) => {
     try {
         const studenthscs = await Studenthsc.findAll({
             where: {
-                status: "active" 
+                status: "active"
             },
             include: [
                 { model: School, attributes: ["id", "name"] },
@@ -232,7 +234,7 @@ controller.getStudenthscsBySchool = async (req, res) => {
         const studenthscs = await Studenthsc.findAll({
             where: {
                 school_id,
-                status: "active"   
+                status: "active"
             },
             include: [
                 { model: School, attributes: ["id", "name"] },
@@ -314,7 +316,10 @@ controller.updateStudenthsc = async (req, res) => {
 
         const updatedData = { ...req.body };
 
-        // ✅ Convert age object to string if needed
+        if (Array.isArray(updatedData.group_subjects)) {
+            updatedData.group_subjects = updatedData.group_subjects.join(",");
+        }
+
         if (typeof updatedData.age === 'object' && updatedData.age !== null) {
             const { years = 0, months = 0, days = 0 } = updatedData.age;
             updatedData.age = `${years}y ${months}m ${days}d`;
