@@ -170,7 +170,7 @@ controller.createStudentsslc = async (req, res) => {
             guardianOccupation,
             guardianAddress,
             guardianNumber,
-            academicHistory,
+            academicHistory: JSON.stringify(academicHistory),
             parentconsentform,
             passorfail,
             tceslc,
@@ -269,14 +269,19 @@ controller.getStudentsslcById = async (req, res) => {
         if (!application) {
             return res.status(404).json({ error: "Application not found" });
         }
-
+        const appData = application.toJSON();
+        if (appData.academicHistory && typeof appData.academicHistory === "string") {
+            try {
+                appData.academicHistory = JSON.parse(appData.academicHistory);
+            } catch (err) {
+                console.error("Error parsing academicHistory:", err);
+                appData.academicHistory = [];
+            }
+        }
         const age = calculateAge(application.dob);
-        const applicationWithAge = {
-            ...application.toJSON(),
-            age
-        };
+        appData.age = age;
 
-        res.json({ application: applicationWithAge });
+        res.json({ application: appData });
     } catch (error) {
         console.error("Error fetching application by ID:", error);
         res.status(500).json({ error: "Internal server error" });
