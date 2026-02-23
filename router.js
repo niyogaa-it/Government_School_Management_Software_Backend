@@ -14,6 +14,8 @@ const studentsslcRouter = require('./routes/studentsslc.router');
 const studenthscRouter = require('./routes/studenthsc.router');
 const subjectRouter = require('./routes/subject.router');
 const sidebarpermissionsRouterRouter = require('./routes/sidebarpermissions.router');
+const raiseFeeDemandRouter = require("./routes/RaiseFeeDemand.router");
+const feeCollectionRouter = require("./routes/Feecollection.router");
 
 router.use("/user", userRoute);
 router.use("/school", schoolRoute);  
@@ -28,5 +30,7 @@ router.use("/studentsslc", studentsslcRouter);
 router.use("/studenthsc", studenthscRouter);
 router.use('/subject', subjectRouter);
 router.use('/sidebar-permissions', sidebarpermissionsRouterRouter);
+router.use('/raiseFeeDemand', raiseFeeDemandRouter);
+router.use('/feeCollection', feeCollectionRouter);
 
 module.exports = router;
