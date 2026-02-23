@@ -10,6 +10,7 @@ const Studentsslc = require("./studentsslc");
 const Subject = require("./Subject");
 const Studenthsc = require("./studenthsc");
 const SidebarPermission = require("./sidebarpermission");
+const FeeCollection = require("./Feecollection");
 // const PromotedStudent = require("./promotedstudent");
 
 // ✅ Define relationships
@@ -48,9 +49,12 @@ Studenthsc.belongsTo(Group, { foreignKey: "group_id" });
 
 SidebarPermission.belongsTo(Role, { foreignKey: "role_id" });
 
+FeeCollection.belongsTo(School, { foreignKey: "school_id" });
+FeeCollection.belongsTo(Studentsslc, { foreignKey: "student_id", constraints: false });
+
 // PromotedStudent.belongsTo(Studentsslc, { foreignKey: "studentsslc_id" });
 
 module.exports = {
     Admin, Role, School, Grade, Section, Applicationsslc, Applicationhsc,
-    Group, Studentsslc, Subject, Studenthsc, SidebarPermission
+    Group, Studentsslc, Subject, Studenthsc, SidebarPermission, FeeCollection
 };
