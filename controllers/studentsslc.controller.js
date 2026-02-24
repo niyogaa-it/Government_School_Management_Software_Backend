@@ -170,7 +170,7 @@ controller.createStudentsslc = async (req, res) => {
             guardianOccupation,
             guardianAddress,
             guardianNumber,
-            academicHistory: JSON.stringify(academicHistory),
+            academicHistory,
             parentconsentform,
             passorfail,
             tceslc,
@@ -297,22 +297,26 @@ controller.updateStudentsslc = async (req, res) => {
             return res.status(404).json({ error: "Application not found" });
         }
 
-        // ✅ Prepare update data
         const updatedData = { ...req.body };
 
-        // ✅ Convert age object to string if necessary
+        // ✅ Convert age object properly
         if (typeof updatedData.age === 'object' && updatedData.age !== null) {
             const { years = 0, months = 0, days = 0 } = updatedData.age;
             updatedData.age = `${years}y ${months}m ${days}d`;
         }
 
-        // ✅ Perform the update
+        // ✅ IMPORTANT FIX
+        if (updatedData.academicHistory && typeof updatedData.academicHistory !== "string") {
+            updatedData.academicHistory = JSON.stringify(updatedData.academicHistory);
+        }
+
         await existingStudent.update(updatedData);
 
         return res.json({
             message: "Application updated successfully",
             application: existingStudent
         });
+
     } catch (error) {
         console.error("Error updating application:", error);
         res.status(500).json({ error: "Internal server error" });
@@ -357,7 +361,7 @@ controller.getStudentsslcByAdmission = async (req, res) => {
         const student = await Studentsslc.findOne({
             where: {
                 admissionNumber: admissionNumber.trim(),
-                academicYear: cleanAcademicYear,  
+                academicYear: cleanAcademicYear,
                 status: { [Op.ne]: "Removed" }
             },
             include: [
