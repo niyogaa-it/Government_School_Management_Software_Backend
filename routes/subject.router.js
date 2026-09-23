@@ -9,5 +9,6 @@ router.get("/getSubjectsBySchoolGradeSection/:schoolId/:gradeId/:sectionId",subj
 router.put("/updateStatus/:id",subjectController.updateStatus);
 router.put("/updateSubject/:id", subjectController.updateSubject);
 router.get("/getSubjectsBySchoolAndGrade/:schoolId/:gradeId",subjectController.getSubjectsBySchoolAndGrade);
+router.get("/getSubjectsBySchoolAndYear/:school_id/:academic_year", subjectController.getSubjectsBySchoolAndYear);
 
 module.exports = router;

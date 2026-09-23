@@ -2,6 +2,7 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 const School = require("./school");
 const Grade = require("./grade");
+const Section = require("./section");
 
 
 const Applicationsslc = sequelize.define("Applicationsslc", {
@@ -52,12 +53,24 @@ const Applicationsslc = sequelize.define("Applicationsslc", {
       key: "id",
     },
   },
+  section_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: "section",
+      key: "id"
+    }
+  },
   dob: {
     type: DataTypes.DATE,
     allowNull: true
   },
   age: {
     type: DataTypes.STRING,
+    allowNull: true
+  },
+    mobileNumber: {
+    type: DataTypes.BIGINT,
     allowNull: true
   },
   nationality: {
@@ -156,12 +169,8 @@ const Applicationsslc = sequelize.define("Applicationsslc", {
     type: DataTypes.BIGINT,
     allowNull: true
   },
-  telephoneNumber: {
-    type: DataTypes.BIGINT,
-    allowNull: true
-  },
-  mobileNumber: {
-    type: DataTypes.BIGINT,
+  parentEmail: {
+    type: DataTypes.STRING,
     allowNull: true
   },
   guardianName: {
@@ -196,7 +205,7 @@ const Applicationsslc = sequelize.define("Applicationsslc", {
     type: DataTypes.STRING,
     allowNull: true
   },
-  firstLanguage: {
+  medium: {
     type: DataTypes.STRING,
     allowNull: true
   },
@@ -209,14 +218,43 @@ const Applicationsslc = sequelize.define("Applicationsslc", {
     allowNull: true
   },
   accountNumber: {
-    type: DataTypes.BIGINT,
+    type: DataTypes.STRING,
     allowNull: true
   },
   ifsccode: {
     type: DataTypes.STRING,
     allowNull: true
   },
-
+  feeCollected: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    allowNull: true
+  },
+  feeAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  paymentMode: {
+    type: DataTypes.STRING(20),
+    allowNull: true   // 'cash' | 'online'
+  },
+  transactionId: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  receiptNumber: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  feePaidAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  remarks: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    defaultValue: null
+  },
   studentStatus: {
     field: "studentStatus",
     type: DataTypes.STRING, // You can change the type if needed
@@ -231,6 +269,7 @@ const Applicationsslc = sequelize.define("Applicationsslc", {
 
 Applicationsslc.belongsTo(School, { foreignKey: "school_id" });
 Applicationsslc.belongsTo(Grade, { foreignKey: "grade_id" });
+Applicationsslc.belongsTo(Section, { foreignKey: "section_id", as: "Section" });
 
 
 module.exports = Applicationsslc;

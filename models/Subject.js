@@ -17,6 +17,10 @@ const Subject = sequelize.define("Subject", {
       key: "id",
     },
   },
+  academic_year: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
   grade_id: {
     type: DataTypes.INTEGER,
     allowNull: false,

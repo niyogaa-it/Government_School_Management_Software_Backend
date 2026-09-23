@@ -18,6 +18,10 @@ const Grade = sequelize.define("Grade", {
             key: "id",
         },
     },
+    academic_year: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     grade: {
         type: DataTypes.STRING,
         allowNull: true,

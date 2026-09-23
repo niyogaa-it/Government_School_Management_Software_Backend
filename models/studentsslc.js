@@ -169,8 +169,8 @@ const Studentsslc = sequelize.define("Studentsslc", {
     type: DataTypes.BIGINT,
     allowNull: true
   },
-  telephoneNumber: {
-    type: DataTypes.BIGINT,
+  parentEmail: {
+    type: DataTypes.STRING,
     allowNull: true
   },
   mobileNumber: {
@@ -209,7 +209,7 @@ const Studentsslc = sequelize.define("Studentsslc", {
     type: DataTypes.STRING,
     allowNull: true
   },
-  firstLanguage: {
+  medium: {
     type: DataTypes.STRING,
     allowNull: true
   },
@@ -222,12 +222,17 @@ const Studentsslc = sequelize.define("Studentsslc", {
     allowNull: true
   },
   accountNumber: {
-    type: DataTypes.BIGINT,
+    type: DataTypes.STRING,
     allowNull: true
   },
   ifsccode: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+   studentType: {
+    type: DataTypes.ENUM("new", "old"),
+    allowNull: false,
+    defaultValue: "new",
   },
   status: {
     field: "status",

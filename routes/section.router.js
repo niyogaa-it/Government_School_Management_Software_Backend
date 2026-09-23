@@ -11,10 +11,13 @@ router.get("/getSectionsBySchoolAndGrade/:school_id/:grade_id", sectionControlle
 router.get("/getSectionById/:id", sectionController.getSectionById);
 router.put("/updateSection/:id", sectionController.updateSection);
 router.put("/updateStatus/:id", sectionController.updateStatus);
-// router.get(
-//   "/getSectionsByFilter",
-//   sectionController.getSectionsByFilter
-// );
+router.get("/getSectionsBySchoolAndYear/:school_id/:academic_year", sectionController.getSectionsBySchoolAndYear);
+router.get("/getSectionsForStudyPlan/:school_id/:grade_id/:academic_year", sectionController.getSectionsForStudyPlan);
+router.post("/attachSubjects/:id", sectionController.attachSubjects);
+router.put("/updateSectionSubject/:id", sectionController.updateSectionSubject);
+router.delete("/detachSubject/:id/:subject_id", sectionController.detachSubject);
+router.put("/allocateClassTeacher/:id", sectionController.allocateClassTeacher);
+router.post("/cloneSubjects", sectionController.cloneSubjects);
 
 
 

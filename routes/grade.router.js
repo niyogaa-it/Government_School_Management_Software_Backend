@@ -7,5 +7,6 @@ router.get("/getAllGrades", gradeController.getAllGrades);
 router.get("/getGradesBySchool/:school_id", gradeController.getGradesBySchool);
 router.delete("/deleteGrade/:id", gradeController.deleteGrade);
 router.put("/updateGrade/:id", gradeController.updateGrade);
+router.get("/getGradesBySchoolAndYear/:school_id/:academic_year", gradeController.getGradesBySchoolAndYear);
 
 module.exports = router;

@@ -4,7 +4,7 @@ const controller = {};
 
 controller.createGrade = async (req, res) => {
     try {
-        const { grade, school_id } = req.body;
+        const { grade, school_id, academic_year } = req.body;
 
         // Check if the school exists
         const schoolExists = await School.findByPk(school_id);
@@ -12,9 +12,9 @@ controller.createGrade = async (req, res) => {
             return res.status(404).json({ error: "School not found" });
         }
 
-        // Check for duplicate grade within the same school
+        // Check for duplicate grade within the same school and academic year
         const existingGrade = await Grade.findOne({
-            where: { grade, school_id, status: 1 },
+            where: { grade, school_id, academic_year, status: 1 },
         });
 
         if (existingGrade) {
@@ -25,6 +25,7 @@ controller.createGrade = async (req, res) => {
         const newGrade = await Grade.create({
             grade,
             school_id,
+            academic_year,
             status: 1,
         });
 
@@ -60,7 +61,7 @@ controller.getGradesBySchool = async (req, res) => {
 
         const grades = await Grade.findAll({
             where: { school_id, status: 1 },
-            attributes: ["id", "grade"],
+            attributes: ["id", "grade", "academic_year"],
         });
 
         if (grades.length === 0) {
@@ -97,7 +98,7 @@ controller.deleteGrade = async (req, res) => {
 controller.updateGrade = async (req, res) => {
     try {
         const { id } = req.params;
-        const { grade } = req.body;
+        const { grade, academic_year } = req.body;
 
         const existingGrade = await Grade.findByPk(id);
 
@@ -105,11 +106,44 @@ controller.updateGrade = async (req, res) => {
             return res.status(404).json({ error: "Grade not found" });
         }
 
-        await existingGrade.update({ grade });
+        await existingGrade.update({ grade, academic_year });
 
         res.status(200).json({ message: "Grade updated successfully" });
     } catch (error) {
         console.error("Error updating grade:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET GRADES BY SCHOOL + ACADEMIC YEAR
+// Used by student create/edit forms so only grades belonging to the
+// selected academic year are shown — prevents XI from 2025-2026 appearing
+// when the user has chosen 2026-2027 (and vice-versa).
+// ─────────────────────────────────────────────────────────────────────────────
+controller.getGradesBySchoolAndYear = async (req, res) => {
+    try {
+        const { school_id, academic_year } = req.params;
+        const { Op, fn, col, where: sqlWhere } = require("sequelize");
+
+        if (!school_id || !academic_year) {
+            return res.status(400).json({ message: "School ID and Academic Year are required." });
+        }
+
+        const normalizedYear = academic_year.replace(/\s+/g, "");
+        const yearMatch = sqlWhere(fn("REPLACE", col("academic_year"), " ", ""), normalizedYear);
+
+        const grades = await Grade.findAll({
+            where: { school_id, status: 1, [Op.and]: [yearMatch] },
+            attributes: ["id", "grade", "academic_year"],
+        });
+
+        if (grades.length === 0) {
+            return res.status(404).json({ message: "No grades found for this school and academic year." });
+        }
+        res.status(200).json({ grades });
+    } catch (error) {
+        console.error("Error fetching grades by school and year:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };

@@ -1,7 +1,5 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
-const School = require("./school");
-const Grade = require("./grade");
 
 const Section = sequelize.define("section", {
     id: {
@@ -13,18 +11,16 @@ const Section = sequelize.define("section", {
     school_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-            model: "school",
-            key: "id",
-        },
+        references: { model: "school", key: "id" },
+    },
+    academic_year: {
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     grade_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-            model: "grade",
-            key: "id",
-        },
+        references: { model: "grade", key: "id" },
     },
     sectionName: {
         type: DataTypes.STRING,
@@ -38,24 +34,13 @@ const Section = sequelize.define("section", {
         type: DataTypes.INTEGER,
         allowNull: true,
     },
-},
-    // {
-    //     tableName: "section",
-    //     timestamps: false,
-    //     indexes: [
-    //         {
-    //             unique: true,
-    //             fields: ["school_id", "academicYear", "grade_id", "sectionName"] // ✅ DB safety
-    //         }
-    //     ]
-    // });
-
-    {
-        timestamps: false,
-        tableName: "section",
-    });
-
-Section.belongsTo(School, { foreignKey: "school_id" });
-Section.belongsTo(Grade, { foreignKey: "grade_id" });
+}, {
+    timestamps: false,
+    tableName: "section",
+});
 
 module.exports = Section;
+
+// Section.belongsTo(School, { foreignKey: "school_id" });
+// Section.belongsTo(Grade, { foreignKey: "grade_id" });
+

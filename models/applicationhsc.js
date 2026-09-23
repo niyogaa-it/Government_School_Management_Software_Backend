@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 const School = require("./school");
 const Grade = require("./grade");
-
+const Section = require("./section");
 
 const Applicationhsc = sequelize.define("Applicationhsc", {
     id: {
@@ -52,12 +52,29 @@ const Applicationhsc = sequelize.define("Applicationhsc", {
             key: "id",
         },
     },
+    section_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: "section",
+            key: "id"
+        }
+    },
+    group_subjects: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: null,
+    },
     dob: {
         type: DataTypes.DATE,
         allowNull: true
     },
     age: {
         type: DataTypes.STRING,
+        allowNull: true
+    },
+        mobileNumber: {
+        type: DataTypes.BIGINT,
         allowNull: true
     },
     nationality: {
@@ -148,12 +165,8 @@ const Applicationhsc = sequelize.define("Applicationhsc", {
         type: DataTypes.BIGINT,
         allowNull: true
     },
-    telephoneNumber: {
-        type: DataTypes.BIGINT,
-        allowNull: true
-    },
-    mobileNumber: {
-        type: DataTypes.BIGINT,
+    parentEmail: {
+        type: DataTypes.STRING,
         allowNull: true
     },
     guardianName: {
@@ -172,12 +185,16 @@ const Applicationhsc = sequelize.define("Applicationhsc", {
         type: DataTypes.BIGINT,
         allowNull: true
     },
+    academicHistory: {
+        type: DataTypes.JSON,
+        allowNull: true,
+    },
     examYear: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.STRING,
         allowNull: true
     },
-    registrationnumber: {
-        type: DataTypes.BIGINT,
+    registrationNumber: {
+        type: DataTypes.STRING,
         allowNull: true
     },
     tamil: {
@@ -208,11 +225,6 @@ const Applicationhsc = sequelize.define("Applicationhsc", {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    // availablegroups: {
-    //     field: "availablegroups",
-    //     type: DataTypes.STRING,
-    //     allowNull: true,
-    // },
     terminationreason: {
         type: DataTypes.STRING,
         allowNull: true
@@ -238,20 +250,50 @@ const Applicationhsc = sequelize.define("Applicationhsc", {
         allowNull: true
     },
     accountNumber: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.STRING,
         allowNull: true
     },
     ifsccode: {
         type: DataTypes.STRING,
         allowNull: true
     },
-
+    feeCollected: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: true
+    },
+    feeAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true
+    },
+    paymentMode: {
+        type: DataTypes.STRING(20),
+        allowNull: true   // 'cash' | 'online'
+    },
+    transactionId: {
+        type: DataTypes.STRING(255),  
+        allowNull: true
+    },
+    receiptNumber: {
+        type: DataTypes.STRING(150),  
+        allowNull: true
+    },
+    feePaidAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
+    remarks: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    defaultValue: null
+  },
     studentStatus: {
         field: "studentStatus",
-        type: DataTypes.STRING, // You can change the type if needed
+        type: DataTypes.STRING,
         allowNull: false,
-        defaultValue: "Applied" // Default value for new applications
+        defaultValue: "Applied"
     },
+    
 
 }, {
     timestamps: false,
@@ -260,6 +302,6 @@ const Applicationhsc = sequelize.define("Applicationhsc", {
 
 Applicationhsc.belongsTo(School, { foreignKey: "school_id" });
 Applicationhsc.belongsTo(Grade, { foreignKey: "grade_id" });
-
+Applicationhsc.belongsTo(Section, { foreignKey: "section_id", as: "Section" });
 
 module.exports = Applicationhsc;

@@ -66,10 +66,11 @@ const Studenthsc = sequelize.define("Studenthsc", {
             key: "id",
         },
     },
-    group_subjects: {
-        type: DataTypes.TEXT,
-        allowNull: true
-    },
+group_subjects: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: null,
+},
     group_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
@@ -83,6 +84,14 @@ const Studenthsc = sequelize.define("Studenthsc", {
         allowNull: true
     },
     age: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    previousmedium: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    preferredmedium: {
         type: DataTypes.STRING,
         allowNull: true
     },
@@ -174,8 +183,8 @@ const Studenthsc = sequelize.define("Studenthsc", {
         type: DataTypes.BIGINT,
         allowNull: true
     },
-    telephoneNumber: {
-        type: DataTypes.BIGINT,
+    parentEmail: {
+        type: DataTypes.STRING,
         allowNull: true
     },
     mobileNumber: {
@@ -198,12 +207,16 @@ const Studenthsc = sequelize.define("Studenthsc", {
         type: DataTypes.BIGINT,
         allowNull: true
     },
+    academicHistory: {
+    type: DataTypes.JSON,
+    allowNull: true,
+  },
     examYear: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.STRING,
         allowNull: true
     },
-    registrationnumber: {
-        type: DataTypes.BIGINT,
+    registrationNumber: {
+        type: DataTypes.STRING,
         allowNull: true
     },
     tamil: {
@@ -242,15 +255,6 @@ const Studenthsc = sequelize.define("Studenthsc", {
         type: DataTypes.STRING,
         allowNull: true
     },
-    previousmedium: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    preferredmedium: {
-        field: "preferredmedium",
-        type: DataTypes.STRING,
-        allowNull: true
-    },
     bankName: {
         type: DataTypes.STRING,
         allowNull: true
@@ -260,12 +264,17 @@ const Studenthsc = sequelize.define("Studenthsc", {
         allowNull: true
     },
     accountNumber: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.STRING,
         allowNull: true
     },
     ifsccode: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    studentType: {
+        type: DataTypes.ENUM("new", "old"),
+        allowNull: false,
+        defaultValue: "new",
     },
     status: {
         field: "status",

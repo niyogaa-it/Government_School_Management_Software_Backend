@@ -30,6 +30,10 @@ const FeeCollection = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    emis_number: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     student_name: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -74,6 +78,11 @@ const FeeCollection = sequelize.define(
       type: DataTypes.ENUM("Cash", "Online", "Cheque", "DD"),
       defaultValue: "Cash",
     },
+    transaction_id: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: "UTR / Cheque No / DD Number for non-cash payments",
+    },
     collection_date: {
       type: DataTypes.DATEONLY,
       allowNull: false,
@@ -92,5 +101,13 @@ const FeeCollection = sequelize.define(
     timestamps: true,
   }
 );
+
+// Association — must be defined so controller's `include: School` works
+FeeCollection.associate = (models) => {
+  FeeCollection.belongsTo(models.School, {
+    foreignKey: "school_id",
+    as: "school",
+  });
+};
 
 module.exports = FeeCollection;

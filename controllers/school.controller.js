@@ -8,7 +8,7 @@ controller.getAllSchools = async (req, res) => {
         // ✅ Removed superadmin check
         const schools = await School.findAll({
             where: { status: 1 }, // Optional: if soft-delete logic is used
-            attributes: ["id", "name", "shortcode", "phoneNumber", "address", "city", "state", "pincode"],
+            attributes: ["id", "name", "shortcode", "phoneNumber", "email", "address", "city", "state", "pincode", "logo"],
         });
         
         return res.json({ schools });
@@ -22,7 +22,12 @@ controller.getAllSchools = async (req, res) => {
 // ✅ Create school (Only if authorized)
 controller.createSchool = async (req, res) => {
     try {
-        const { name, shortcode, phoneNumber, address, city, pincode, state } = req.body;
+        const { name, shortcode, phoneNumber, email, address, city, pincode, state, logo } = req.body;
+
+        // 🔍 DEBUG — log what we received
+        console.log("createSchool called");
+        console.log("  name:", name);
+        console.log("  logo received:", logo ? `YES (${logo.length} chars)` : "NO / NULL");
 
         // 🔒 Check for required fields
         if (!name || !shortcode || !address || !city || !pincode || !state) {
@@ -40,11 +45,13 @@ controller.createSchool = async (req, res) => {
             name,
             shortcode,
             phoneNumber,
+            email,
             address,
             city,
             pincode,
             state,
-            status: 1, // default active
+            status: 1,
+            logo: logo || null,
         });
 
         return res.status(201).json({
@@ -93,7 +100,7 @@ controller.deleteSchool = async (req, res) => {
 controller.updateSchool = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, shortcode, phoneNumber, address, city, state, pincode } = req.body;
+        const { name, shortcode, phoneNumber, email, address, city, state, pincode, logo } = req.body;
 
         const school = await School.findOne({
             where: { id, status: 1 }
@@ -107,10 +114,12 @@ controller.updateSchool = async (req, res) => {
             name,
             shortcode,
             phoneNumber,
+            email,
             address,
             city,
             state,
-            pincode
+            pincode,
+            ...(logo !== undefined && { logo: logo || null }),
         });
 
         return res.status(200).json({

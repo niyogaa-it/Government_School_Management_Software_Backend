@@ -1,8 +1,9 @@
-const { Applicationhsc, School, Grade, Studenthsc } = require("../models");
+const { Applicationhsc, School, Grade, Studenthsc, Section } = require("../models");
 
 const controller = {};
 
 const { Op } = require("sequelize");
+const sequelize = require("../config/database");
 
 controller.createApplicationhsc = async (req, res) => {
     try {
@@ -17,6 +18,7 @@ controller.createApplicationhsc = async (req, res) => {
             grade_id,
             dob,
             age,
+            mobileNumber,
             nationality,
             state,
             birthdistrict,
@@ -39,14 +41,14 @@ controller.createApplicationhsc = async (req, res) => {
             motherIncome,
             address,
             pincode,
-            telephoneNumber,
-            mobileNumber,
+            parentEmail,
             guardianName,
             guardianOccupation,
             guardianAddress,
             guardianNumber,
+            academicHistory,
             examYear,
-            registrationnumber,
+            registrationNumber,
             tamil,
             english,
             maths,
@@ -71,6 +73,16 @@ controller.createApplicationhsc = async (req, res) => {
             });
         }
 
+        // ✅ Check for duplicate Aadhar number within the same school (only if provided)
+        if (aadharNumber) {
+            const aadharExists = await Applicationhsc.findOne({
+                where: { aadharNumber, school_id }
+            });
+            if (aadharExists) {
+                return res.status(400).json({ error: "Aadhar number already exists for this school" });
+            }
+        }
+
         // Get school details with shortcode
         const school = await School.findByPk(school_id);
         if (!school) return res.status(404).json({ error: "School not found" });
@@ -86,6 +98,12 @@ controller.createApplicationhsc = async (req, res) => {
         const sequence = String(count + 1).padStart(4, '0');
         const applicationNumber = `${school.shortcode}/APP-HSC/${academicYear}/${sequence}`;
 
+        // Parse academicHistory if it is a JSON string
+        let parsedAcademicHistory = academicHistory;
+        if (typeof academicHistory === "string") {
+            try { parsedAcademicHistory = JSON.parse(academicHistory); } catch { parsedAcademicHistory = null; }
+        }
+
         // Create application
         const newApplicationhsc = await Applicationhsc.create({
             applicationNumber,
@@ -98,6 +116,7 @@ controller.createApplicationhsc = async (req, res) => {
             grade_id,
             dob,
             age,
+            mobileNumber,
             nationality,
             state,
             birthdistrict,
@@ -120,14 +139,14 @@ controller.createApplicationhsc = async (req, res) => {
             motherIncome,
             address,
             pincode,
-            telephoneNumber,
-            mobileNumber,
+            parentEmail,
             guardianName,
             guardianOccupation,
             guardianAddress,
             guardianNumber,
+            academicHistory: parsedAcademicHistory,
             examYear,
-            registrationnumber,
+            registrationNumber,
             tamil,
             english,
             maths,
@@ -163,8 +182,8 @@ controller.getAllApplicationhsc = async (req, res) => {
                 studentStatus: { [Op.ne]: "Removed" }
             },
             include: [
-                { model: School, attributes: ["id", "name"] },
-                { model: Grade, attributes: ["id", "grade"] } // ✅ Add this to include Grade
+                { model: School, attributes: ["id", "name", "shortcode"] },
+                { model: Grade, attributes: ["id", "grade"] }
             ]
         });
 
@@ -186,11 +205,11 @@ controller.getApplicationhscsBySchool = async (req, res) => {
                 studentStatus: { [Op.ne]: "Removed" }
             },
             include: [
-                { model: School, attributes: ["id", "name"] },
+                { model: School, attributes: ["id", "name", "shortcode"] },
                 { model: Grade, attributes: ["id", "grade"] }
             ],
             attributes: {
-                exclude: [] // include all fields
+                exclude: []
             }
         });
 
@@ -204,69 +223,126 @@ controller.getApplicationhscsBySchool = async (req, res) => {
     }
 };
 
-// Admit Student
+// ─────────────────────────────────────────────────────────────────────────────
+// ADMIT STUDENT
+// Accepts: section_id (required), group_subjects (optional array of subject IDs)
+// Saves group_subjects to BOTH Applicationhsc and Studenthsc
+// ─────────────────────────────────────────────────────────────────────────────
 controller.admitStudent = async (req, res) => {
+    const transaction = await sequelize.transaction();
     try {
         const { applicationId } = req.params;
+        const { section_id, group_subjects } = req.body;
 
-        const application = await Applicationhsc.findByPk(applicationId);
+        // section_id is required
+        if (!section_id) {
+            await transaction.rollback();
+            return res.status(400).json({ error: "section_id is required" });
+        }
+
+        // 1. Fetch application
+        const application = await Applicationhsc.findByPk(applicationId, { transaction });
         if (!application) {
+            await transaction.rollback();
             return res.status(404).json({ error: "Application not found" });
         }
 
+        // 2. Guard: already admitted
         if (application.studentStatus === "Admitted") {
-            return res.status(400).json({ error: "Student already admitted" });
+            await transaction.rollback();
+            return res.status(400).json({ error: "Student is already admitted" });
         }
 
-        const school = await School.findByPk(application.school_id);
-        if (!school) {
-            return res.status(404).json({ error: "School not found" });
-        }
-
-        // PREFIX FOR HSC
-        const prefix = `${school.shortcode}HSC`;
-
-        // STEP 1: Find last HSC admission number
-        const lastStudent = await Studenthsc.findOne({
-            where: {
-                school_id: application.school_id,
-                admissionNumber: {
-                    [Op.like]: `${prefix}%`
-                }
-            },
-            order: [["admissionNumber", "DESC"]],
-            attributes: ["admissionNumber"]
+        // 2b. Guard: application fee must be collected before admission (fee-applicable schools only)
+        const feeGateSchool = await School.findByPk(application.school_id, {
+            attributes: ["id", "name", "shortcode"],
+            transaction
         });
+        const RLMHSS_SHORTCODE = "RLMHSS";
+        const isFeeApplicableSchool = (() => {
+            const shortcode = (feeGateSchool?.shortcode || "").toUpperCase().trim();
+            const name = (feeGateSchool?.name || "").toUpperCase().trim();
+            return shortcode === RLMHSS_SHORTCODE || name.includes("RANI LADY") || name.includes("MEYYAMMAI");
+        })();
+        if (isFeeApplicableSchool && !application.feeCollected) {
+            await transaction.rollback();
+            return res.status(400).json({ error: "Application fee must be collected before admitting this student" });
+        }
 
-        // STEP 2: Extract last sequence
-        let nextSeq = 1;
-        if (lastStudent?.admissionNumber) {
-            const match = lastStudent.admissionNumber.match(/(\d{4})$/);
-            if (match) {
-                nextSeq = parseInt(match[1], 10) + 1;
+        // 3. Check for duplicate EMIS in Studenthsc
+        if (application.emisNum) {
+            const emisExists = await Studenthsc.findOne({
+                where: { emisNum: application.emisNum, school_id: application.school_id },
+                transaction
+            });
+            if (emisExists) {
+                await transaction.rollback();
+                return res.status(400).json({ error: "A student with this EMIS number is already admitted" });
             }
         }
 
-        // STEP 3: Generate new admission number
-        const newAdmissionNumber = `${prefix}${String(nextSeq).padStart(4, "0")}`;
+        // 4. Generate admission number
+        // Format: RLMHSSHSC11324 — continuous sequence per school (NOT per academicYear),
+        // never resets. Next number = last admission number's trailing digits + 1.
+        const school = feeGateSchool;
 
-        // STEP 4: Update application status
-        await application.update({ studentStatus: "Admitted" });
+        const latestAdmission = await Studenthsc.findOne({
+            where: { school_id: application.school_id },
+            order: [["id", "DESC"]],
+            attributes: ["admissionNumber"],
+            transaction
+        });
 
-        // STEP 5: Insert into Studenthsc
+        let nextSequentialNumber = 1;
+        let padLength = 4; // default minimum 4 digits
+        if (latestAdmission?.admissionNumber) {
+            // Match any trailing digits — works for 4, 5, 6, 7... digit numbers
+            const match = latestAdmission.admissionNumber.match(/(\d+)$/);
+            if (match) {
+                nextSequentialNumber = parseInt(match[1], 10) + 1;
+                // Preserve the digit length of the last number (min 4)
+                padLength = Math.max(4, match[1].length);
+            }
+        }
+        // padStart only pads — never truncates, so 99999+1=100000 grows naturally
+        const paddedNumber = String(nextSequentialNumber).padStart(padLength, "0");
+        const newAdmissionNumber = `${school.shortcode}HSC${paddedNumber}`;
+
+        // 5. Calculate age at admission
+        const ageForStudent = (() => {
+            const a = application.age;
+            if (!a) return null;
+            if (typeof a === "object") return JSON.stringify(a);
+            return String(a);
+        })();
+
+        // 6. Normalise group_subjects
+        const normalizedGroupSubjects = (() => {
+            const a = group_subjects;
+            if (!a) return null;
+            if (Array.isArray(a)) return JSON.stringify(a);
+            if (typeof a === "object") return JSON.stringify(a);
+            return String(a);
+        })();
+
+        // 7. Create Studenthsc — section_id and group_subjects stored here
         await Studenthsc.create({
+            admissionNumber: newAdmissionNumber,
             school_id: application.school_id,
             academicYear: application.academicYear,
-            name: application.name,
-            gender: application.gender,
             grade_id: application.grade_id,
-            admissionNumber: newAdmissionNumber,
+            section_id: Number(section_id),
+            group_subjects: normalizedGroupSubjects,
             dateofjoin: new Date(),
             status: "active",
+            studentType: "new",
+            name: application.name,
+            gender: application.gender,
             emisNum: application.emisNum,
             aadharNumber: application.aadharNumber,
             dob: application.dob,
-            age: application.age,
+            age: ageForStudent,
+            mobileNumber: application.mobileNumber,
             nationality: application.nationality,
             state: application.state,
             birthdistrict: application.birthdistrict,
@@ -289,14 +365,14 @@ controller.admitStudent = async (req, res) => {
             motherIncome: application.motherIncome,
             address: application.address,
             pincode: application.pincode,
-            telephoneNumber: application.telephoneNumber,
-            mobileNumber: application.mobileNumber,
+            parentEmail: application.parentEmail,
             guardianName: application.guardianName,
             guardianOccupation: application.guardianOccupation,
             guardianAddress: application.guardianAddress,
             guardianNumber: application.guardianNumber,
+            academicHistory: application.academicHistory,
             examYear: application.examYear,
-            registrationnumber: application.registrationnumber,
+            registrationNumber: application.registrationNumber,
             tamil: application.tamil,
             english: application.english,
             maths: application.maths,
@@ -311,15 +387,28 @@ controller.admitStudent = async (req, res) => {
             bankName: application.bankName,
             branchName: application.branchName,
             accountNumber: application.accountNumber,
-            ifsccode: application.ifsccode
-        });
+            ifsccode: application.ifsccode,
+        }, { transaction });
 
-        return res.json({
+        // 8. Update Applicationhsc — mark Admitted + store section_id + group_subjects
+        await application.update(
+            {
+                studentStatus: "Admitted",
+                section_id: Number(section_id),
+                group_subjects: normalizedGroupSubjects,
+            },
+            { transaction }
+        );
+
+        await transaction.commit();
+
+        return res.status(200).json({
             message: "Student admitted successfully",
             admissionNumber: newAdmissionNumber
         });
 
     } catch (error) {
+        await transaction.rollback();
         console.error("Error admitting student:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
@@ -354,7 +443,7 @@ controller.getApplicationhscById = async (req, res) => {
 
         const application = await Applicationhsc.findByPk(id, {
             include: [
-                { model: School, attributes: ["id", "name"] },
+                { model: School, attributes: ["id", "name", "shortcode", "logo", "address", "city", "state", "pincode", "phoneNumber", "email"] },
                 { model: Grade, attributes: ["id", "grade"] }
             ]
         });
@@ -363,10 +452,20 @@ controller.getApplicationhscById = async (req, res) => {
             return res.status(404).json({ error: "Application not found" });
         }
 
-        const age = calculateAge(application.dob);
+        // Always return age as a plain object so frontend formatAge works correctly.
+        const appJson = application.toJSON();
+        let ageToSend = calculateAge(application.dob);
+        if (!ageToSend && appJson.age) {
+            let stored = appJson.age;
+            if (typeof stored === "string") {
+                try { stored = JSON.parse(stored); } catch { stored = null; }
+                if (typeof stored === "string") { try { stored = JSON.parse(stored); } catch { stored = null; } }
+            }
+            ageToSend = stored;
+        }
         const applicationWithAge = {
-            ...application.toJSON(),
-            age
+            ...appJson,
+            age: ageToSend,
         };
 
         res.json({ application: applicationWithAge });
@@ -379,7 +478,7 @@ controller.getApplicationhscById = async (req, res) => {
 controller.updateApplicationhsc = async (req, res) => {
     try {
         const { id } = req.params;
-        const { emisNum, aadharNumber } = req.body;
+        const { emisNum, aadharNumber, academicHistory } = req.body;
 
         const existing = await Applicationhsc.findByPk(id);
         if (!existing) {
@@ -414,7 +513,13 @@ controller.updateApplicationhsc = async (req, res) => {
             }
         }
 
-        await existing.update(req.body);
+        // Parse academicHistory if it arrives as a JSON string
+        const updateData = { ...req.body };
+        if (typeof academicHistory === "string") {
+            try { updateData.academicHistory = JSON.parse(academicHistory); } catch { updateData.academicHistory = null; }
+        }
+
+        await existing.update(updateData);
 
         res.status(200).json({
             message: "Application updated successfully",
@@ -426,7 +531,7 @@ controller.updateApplicationhsc = async (req, res) => {
     }
 };
 
-// ✅ Soft Delete Application (status → Removed)
+// Soft Delete Application (status → Removed)
 controller.updateStatus = async (req, res) => {
     try {
         const { id } = req.params;
@@ -445,5 +550,114 @@ controller.updateStatus = async (req, res) => {
     }
 };
 
+// ─── collectApplicationFee ────────────────────────────────────────────────────
+// Fee = ₹250, RLMHSS only.
+// Receipt format: RLMHSS/APP-HSC-FC/<academicYear>/<sequence>
+// Sequence is per-school per-academicYear and is CONTINUOUS (never resets within same year).
+// ─────────────────────────────────────────────────────────────────────────────
+controller.collectApplicationFee = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { paymentMode, transactionId, paymentDate } = req.body;
+
+        if (!paymentMode) {
+            return res.status(400).json({ error: "paymentMode is required" });
+        }
+        if (paymentMode === "online" && !transactionId) {
+            return res.status(400).json({ error: "transactionId is required for online payment" });
+        }
+
+        // ── Step 1: Fetch plain application (NO includes) for safe update ──
+        const application = await Applicationhsc.findByPk(id);
+        if (!application) return res.status(404).json({ error: "Application not found" });
+
+        if (application.feeCollected) {
+            return res.status(400).json({ error: "Fee already collected for this application" });
+        }
+
+        // ── Step 2: Fetch school separately for shortcode ──────────────────
+        const school = await School.findByPk(application.school_id, {
+            attributes: ["id", "shortcode", "name", "address", "phoneNumber", "email", "logo", "city", "state", "pincode"]
+        });
+        if (!school) return res.status(404).json({ error: "School not found" });
+
+        const academicYear = application.academicYear;
+
+        // ── Step 3: Count existing paid fees for this school + year ────────
+        const existingCount = await Applicationhsc.count({
+            where: {
+                school_id: application.school_id,
+                academicYear: academicYear,
+                feeCollected: true
+            }
+        });
+
+        const sequence = String(existingCount + 1).padStart(4, "0");
+        // Receipt format: RLMHSS/APP-HSC-FC/26-27/0001  (short year)
+        const shortYear = academicYear.replace(/(\d{2})(\d{2})-(\d{2})(\d{2})/, "$2-$4");
+        const receiptNumber = `${school.shortcode}/APP-HSC-FC/${shortYear}/${sequence}`;
+
+        // ── Step 4: Force all values to correct types before saving ────────
+        // transactionId must be STRING — cast explicitly to avoid BIGINT truncation
+        const txnId = paymentMode === "online"
+            ? String(transactionId).trim()   // keep alphanumeric/special chars intact
+            : null;
+
+        console.log("[collectFee] Saving:", { receiptNumber, paymentMode, txnId, feeAmount: 250 });
+
+        // ── Step 5: Use raw Sequelize update (bypasses instance-save quirks) ─
+        const [rowsUpdated] = await Applicationhsc.update(
+            {
+                feeCollected: true,
+                feeAmount: 250,
+                paymentMode: String(paymentMode),
+                transactionId: txnId,
+                receiptNumber: String(receiptNumber),
+                feePaidAt: paymentDate ? new Date(paymentDate) : new Date()
+            },
+            { where: { id: Number(id) } }
+        );
+
+        console.log("[collectFee] Rows updated:", rowsUpdated);
+
+        if (rowsUpdated === 0) {
+            return res.status(500).json({ error: "Update failed — no rows affected. Check DB column types." });
+        }
+
+        // ── Step 6: Re-fetch with associations for response ─────────────────
+        const updated = await Applicationhsc.findByPk(id, {
+            include: [
+                { model: School, attributes: ["id", "name", "shortcode", "address", "phoneNumber", "email", "logo", "city", "state", "pincode"] },
+                { model: Grade, attributes: ["id", "grade"] }
+            ]
+        });
+
+        console.log("[collectFee] Saved receiptNumber:", updated.receiptNumber);
+        console.log("[collectFee] Saved transactionId:", updated.transactionId);
+
+        return res.status(200).json({
+            message: "Fee collected successfully",
+            receiptNumber: updated.receiptNumber,
+            application: updated
+        });
+    } catch (error) {
+        console.error("Error collecting fee:", error);
+        res.status(500).json({ error: "Internal server error", details: error.message });
+    }
+};
+
+// ─── getApplicationFeeStatus ──────────────────────────────────────────────────
+controller.getApplicationFeeStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const application = await Applicationhsc.findByPk(id, {
+            attributes: ["id", "feeCollected", "receiptNumber", "feeAmount", "paymentMode", "transactionId", "feePaidAt"]
+        });
+        if (!application) return res.status(404).json({ error: "Application not found" });
+        return res.json({ feeStatus: application });
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
 
 module.exports = controller;

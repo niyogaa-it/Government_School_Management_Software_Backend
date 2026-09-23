@@ -16,7 +16,31 @@ const subjectRouter = require('./routes/subject.router');
 const sidebarpermissionsRouterRouter = require('./routes/sidebarpermissions.router');
 const raiseFeeDemandRouter = require("./routes/RaiseFeeDemand.router");
 const feeCollectionRouter = require("./routes/Feecollection.router");
+const bulkUploadRouter = require('./routes/bulkupload.router');
+const tcRouter = require("./routes/tc.router");
+const tchscRouter = require("./routes/tchsc.router");
+const attendanceSslcRouter = require("./routes/attendancesslc.router");
+const eventRouter = require("./routes/event.router");
+const attendanceHscRouter = require("./routes/attendancehsc.router");
+const instructorRouter = require("./routes/instructor.router");
+const studyplanRouter = require("./routes/studyplan.router");
+const teacherallocationRouter = require("./routes/teacherAllocation.router");
+const timesetRouter = require("./routes/timeSet.router");
+const weekdayRouter = require("./routes/weekDay.router");
+const timetableRouter = require("./routes/timeTable.router");
 
+
+router.use("/timetable", timetableRouter);
+router.use("/weekday", weekdayRouter);
+router.use("/timeset", timesetRouter);
+router.use("/teacherallocation", teacherallocationRouter);
+router.use("/studyplan", studyplanRouter);
+router.use("/instructor", instructorRouter);
+router.use("/attendancehsc", attendanceHscRouter);
+router.use("/event", eventRouter);
+router.use("/attendance", attendanceSslcRouter);
+router.use("/tchsc", tchscRouter);
+router.use("/tc", tcRouter);
 router.use("/user", userRoute);
 router.use("/school", schoolRoute);  
 router.use("/role", roleRoute);
@@ -32,5 +56,6 @@ router.use('/subject', subjectRouter);
 router.use('/sidebar-permissions', sidebarpermissionsRouterRouter);
 router.use('/raiseFeeDemand', raiseFeeDemandRouter);
 router.use('/feeCollection', feeCollectionRouter);
+router.use("/bulkupload", bulkUploadRouter);
 
 module.exports = router;

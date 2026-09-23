@@ -22,6 +22,11 @@ const School = sequelize.define("School", {
             type: DataTypes.BIGINT,  
             allowNull: true,
         },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+    },    
     address: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -41,6 +46,10 @@ const School = sequelize.define("School", {
     status: {
             type: DataTypes.INTEGER,
             defaultValue: 1
+    },
+    logo: {
+        type: DataTypes.TEXT('long'),  // LONGTEXT — needed for base64 images
+        allowNull: true,
     },
 
 }, {
